@@ -1,15 +1,38 @@
 classDiagram
-    %% Replace the placeholders below with your actual classes, attributes, methods, and relationships.
-    %% Keep this file updated so it matches your final implementation.
-
-    class ClassName {
-        +type attribute
-        +method() returnType
+    class Pet {
+        +string name
+        +string species
+        +int age
+        +string needs
+        +update_pet_info()
     }
 
-    class AnotherClass {
-        +type attribute
-        +method() returnType
+    class CareTask {
+        +string task_name
+        +string category
+        +int time_needed
+        +string priority
+        +bool completed
+        +mark_complete()
+        +update_task()
     }
 
-    ClassName --> AnotherClass : relationship
+    class OwnerPreferences {
+        +int available_time
+        +list preferred_times
+        +dict task_priorities
+        +update_preferences()
+    }
+
+    class DailyPlan {
+        +date date
+        +list selected_tasks
+        +string explanation
+        +generate_plan()
+        +show_plan()
+    }
+
+    Pet "1" --> "*" CareTask : has
+    OwnerPreferences "1" --> "1" DailyPlan : informs
+    DailyPlan "1" --> "*" CareTask : selects
+    Pet "1" --> "*" DailyPlan : receives
