@@ -1,4 +1,5 @@
 import streamlit as st
+from pawpal_system import Owner, Pet, Task, Scheduler
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
 
@@ -38,35 +39,67 @@ At minimum, your system should:
 
 st.divider()
 
+if "owner" not in st.session_state:
+    st.session_state.owner = Owner(
+        available_time=120, preferred_times=["morning"], task_priorities=[]
+    )
+owner = st.session_state.owner
+
 st.subheader("Quick Demo Inputs (UI only)")
 owner_name = st.text_input("Owner name", value="Jordan")
 pet_name = st.text_input("Pet name", value="Mochi")
 species = st.selectbox("Species", ["dog", "cat", "other"])
+age = st.number_input("Pet age", min_value=0, max_value=50, value=2)
+needs = st.text_input("Pet needs (comma-separated)", value="walk, feed")
+
+if st.button("Add pet"):
+    pet = Pet(
+        name=pet_name,
+        species=species,
+        age=int(age),
+        needs=[need.strip() for need in needs.split(",") if need.strip()],
+    )
+    owner.add_pet(pet)
+    st.success(f"Added {pet.name} to {owner_name}'s pets.")
 
 st.markdown("### Tasks")
-st.caption("Add a few tasks. In your final version, these should feed into your scheduler.")
+st.caption("Add a few tasks. Tasks are attached to the selected pet.")
 
-if "tasks" not in st.session_state:
-    st.session_state.tasks = []
-
-col1, col2, col3 = st.columns(3)
-with col1:
-    task_title = st.text_input("Task title", value="Morning walk")
-with col2:
-    duration = st.number_input("Duration (minutes)", min_value=1, max_value=240, value=20)
-with col3:
-    priority = st.selectbox("Priority", ["low", "medium", "high"], index=2)
-
-if st.button("Add task"):
-    st.session_state.tasks.append(
-        {"title": task_title, "duration_minutes": int(duration), "priority": priority}
-    )
-
-if st.session_state.tasks:
-    st.write("Current tasks:")
-    st.table(st.session_state.tasks)
+if not owner.pets:
+    st.info("Add a pet above before creating tasks.")
 else:
-    st.info("No tasks yet. Add one above.")
+    pet_names = [p.name for p in owner.pets]
+    selected_pet_name = st.selectbox("Pet", pet_names)
+    selected_pet = owner.get_pet(selected_pet_name)
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        description = st.text_input("Task description", value="Morning walk")
+    with col2:
+        time = st.text_input("Time", value="07:00")
+    with col3:
+        frequency = st.selectbox("Frequency", ["daily", "weekly", "monthly"])
+
+    if st.button("Add task"):
+        task = Task(description=description, time=time, frequency=frequency)
+        selected_pet.add_task(task)
+        st.success(f"Added task to {selected_pet.name}.")
+
+st.divider()
+
+st.subheader("Current Pets & Tasks")
+
+if not owner.pets:
+    st.info("No pets yet. Add one above.")
+else:
+    for pet in owner.pets:
+        st.markdown(f"**{pet.get_summary()}**")
+        tasks = pet.get_tasks()
+        if tasks:
+            for task in tasks:
+                st.write(f"- {task.get_summary()}")
+        else:
+            st.caption("No tasks yet.")
 
 st.divider()
 

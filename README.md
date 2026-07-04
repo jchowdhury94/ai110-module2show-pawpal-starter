@@ -47,7 +47,10 @@ pip install -r requirements.txt
 Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
 
 
-(.venv) (base) jannati@Jannatis-MacBook-Pro ai110-module2show-pawpal-starter % python3 main.py
+## 🖥️ Sample Output
+
+
+```
 ========================================
          Daily Schedule - Today         
 ========================================
@@ -72,12 +75,7 @@ Total tasks: 3
 Pending: 3
 Completed: 0
 ```
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
-```
+
 
 ## 🧪 Testing PawPal+
 
@@ -95,16 +93,16 @@ Sample test output:
 # Paste your pytest output here
 ```
 
-## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+## 📐 Smarter Scheduling
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Sorting by time | `Scheduler.generate_plan()`, `_safe_parse_time()` | Tasks are sorted by time in chronological order. Invalid times are handled safely. |
+| Filtering by pet or completion status | `Owner.get_all_tasks(pet_name, completed)`, `Pet.get_tasks(completed)`, `Scheduler.generate_plan(pet_name, completed)` | The scheduler can show tasks for one pet, only pending tasks, or only completed tasks. |
+| Recurring task logic | `Task.mark_complete()`, `Task.is_due(reference_date)`, `Pet.complete_task()` | Completing a daily or weekly task creates a new task for the next due date. |
+| Conflict detection | `Scheduler.find_conflicts()` | The scheduler warns when two pending tasks share the same due date and start time. |
+
 
 ## 📸 Demo Walkthrough
 

@@ -33,12 +33,18 @@ I changed the completed attribute in the CareTask class to default to False beca
 **a. Constraints and priorities**
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
+My scheduler considers task time, completion status, due date, frequency, pet name, and possible time conflicts.
 - How did you decide which constraints mattered most?
+I focused on time and completion status first because the main goal is to show what tasks still need to be done and in what order. I also added frequency and due dates because recurring pet care tasks, like feeding or walks, need to repeat over time.
 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
+
+One tradeoff is in how `find_conflicts()` detects scheduling conflicts: it groups pending tasks by the exact pair `(due_date, minutes)` and only flags a conflict when two or more tasks land on that exact same start time. It does not look at how long each task takes, so it can't detect overlapping durations — for example, a 60-minute walk starting at 8:00 AM and a separate task starting at 8:15 AM would genuinely overlap, but since their start times don't match exactly, the scheduler would not warn about it.
+
+I think this tradeoff is reasonable for now because exact-match detection is simple to implement and reason about, and it still catches the most obvious case (two tasks scheduled for the identical time). Real interval-overlap detection would require tracking a duration for every task and comparing time ranges pairwise, which adds real complexity for a scenario where most conflicts in practice are exact double-bookings. The known gap is that back-to-back or partially overlapping tasks can silently slip through, so this is something I'd want to improve if I extended the project.
 
 ---
 

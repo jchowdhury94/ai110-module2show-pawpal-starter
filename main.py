@@ -15,10 +15,12 @@ owner.add_pet(pet2)
 task1 = Task(description="Morning walk", time="07:00", frequency="daily")
 task2 = Task(description="Feed breakfast", time="08:00", frequency="daily")
 task3 = Task(description="Clean litter box", time="18:00", frequency="weekly")
+task4 = Task(description="Feed Whiskers breakfast", time="07:00", frequency="daily")
 
 pet1.add_task(task1)
 pet1.add_task(task2)
 pet2.add_task(task3)
+pet2.add_task(task4)
 
 scheduler = Scheduler(owner, date="Today")
 scheduler.generate_plan()
@@ -83,6 +85,15 @@ def print_schedule(scheduler):
 
 print_schedule(scheduler)
 
+conflict_warnings = [w for w in scheduler.get_conflict_warnings() if w.startswith("Conflict at")]
+if conflict_warnings:
+    print()
+    print("!" * 60)
+    print("WARNING: SCHEDULING CONFLICT(S) DETECTED")
+    print("!" * 60)
+    for warning in conflict_warnings:
+        print(f"  - {warning}")
+
 all_tasks = owner.get_all_tasks()
 total_tasks = len(all_tasks)
 completed_tasks = sum(1 for task in all_tasks if task.completed)
@@ -94,3 +105,34 @@ print("-------")
 print(f"Total tasks: {total_tasks}")
 print(f"Pending: {pending_tasks}")
 print(f"Completed: {completed_tasks}")
+
+
+def print_task_list(title, tasks):
+    print()
+    print(title)
+    print("-" * len(title))
+    if not tasks:
+        print("  No tasks found.")
+        return
+    for task in tasks:
+        pet = next((p for p in owner.pets if task in p.get_tasks()), None)
+        pet_label = f" ({pet.name})" if pet else ""
+        completed = "Yes" if task.completed else "No"
+        print(f"  {task.time:<5} {task.description}{pet_label} - {task.frequency}, Due: {task.due_date}, Completed: {completed}")
+
+
+pending_only = owner.get_all_tasks(completed=False)
+print_task_list("Pending Tasks", pending_only)
+
+biscuit_tasks = owner.get_all_tasks(pet_name="Biscuit")
+print_task_list("Biscuit's Tasks", biscuit_tasks)
+
+
+print()
+print("Recurring Task Demo")
+print("===================")
+print_task_list("Biscuit's Tasks (before completing 'Morning walk')", pet1.get_tasks())
+
+pet1.complete_task("Morning walk")
+
+print_task_list("Biscuit's Tasks (after completing 'Morning walk')", pet1.get_tasks())
