@@ -1,81 +1,137 @@
-# PawPal+ (Module 2 Project)
+# PawPal+
 
-You are building **PawPal+**, a Streamlit app that helps a pet owner plan care tasks for their pet.
+PawPal+ is a pet care planning assistant. It helps a pet owner track care tasks for one or more pets and generate a daily schedule, ordered by time and flagged for scheduling conflicts.
 
-## Scenario
+## 🐾 Scenario
 
-A busy pet owner needs help staying consistent with pet care. They want an assistant that can:
+A busy pet owner needs help staying consistent with pet care — tracking tasks like walks, feeding, meds, and grooming, and turning them into a clear daily plan.
 
-- Track pet care tasks (walks, feeding, meds, enrichment, grooming, etc.)
-- Consider constraints (time available, priority, owner preferences)
-- Produce a daily plan and explain why it chose that plan
+## ✨ Features
 
-Your job is to design the system first (UML), then implement the logic in Python, then connect it to the Streamlit UI.
+- Add and manage multiple pets and their care tasks.
+- Generate daily schedules sorted by time.
+- Filter tasks by pet or completion status (available via the backend API and demonstrated in the CLI demo; not yet exposed in the Streamlit UI).
+- Automatically create new occurrences for recurring daily and weekly tasks.
+- Detect scheduling conflicts and display warning messages.
+- Display schedules in both a command-line demo and a Streamlit interface.
 
-## What you will build
+Note: monthly tasks are marked complete but do not currently auto-generate a follow-up occurrence (only daily and weekly tasks recur).
 
-Your final app should:
+Note: the CLI demo's "Priority" column is a display-only label computed from keyword matching in `main.py` — task priority does not currently affect how the scheduler orders or selects tasks.
 
-- Let a user enter basic owner + pet info
-- Let a user add/edit tasks (duration + priority at minimum)
-- Generate a daily schedule/plan based on constraints and priorities
-- Display the plan clearly (and ideally explain the reasoning)
-- Include tests for the most important scheduling behaviors
+## 🧠 Core Algorithms
 
-## Getting started
+| Algorithm | Implementation | Description |
+|---|---|---|
+| Chronological sorting | `Scheduler.generate_plan` / `_time_sort_key` | Separates pending and completed tasks, then sorts each group by time (parsed from `"HH:MM"` into minutes since midnight); tasks with unparseable times sort last. |
+| Filtering | `Pet.get_tasks`, `Owner.get_all_tasks` | Returns tasks filtered by completion status at the pet level, and by pet name and/or completion status at the owner level. |
+| Recurring task generation | `Task.mark_complete` | On completion, daily tasks spawn a new occurrence due 1 day later and weekly tasks 7 days later; monthly tasks are marked complete but do not currently spawn a follow-up. |
+| Conflict detection | `Scheduler.find_conflicts` | Groups pending tasks by `(due_date, time)` and flags any group containing more than one task as a scheduling conflict; tasks with unparseable times are tracked separately and reported rather than silently dropped. |
+
+## 🗂️ Project structure
+
+- `app.py` — Streamlit UI: add pets/tasks and generate a schedule interactively.
+- `main.py` — CLI demo script showing sorting, filtering, conflict detection, and recurring tasks.
+- `pawpal_system.py` — core classes: `Pet`, `Task`, `Owner`, `Scheduler`.
+- `tests/test_pawpal.py` — pytest suite covering the scheduling behaviors above.
+- `diagrams/uml_final.mmd` — final UML class diagram (Mermaid) for the completed system.
+- `reflection.md` — write-up on design decisions and how the system evolved during implementation.
+- `ai_interactions.md` — log of AI-assisted interactions used while building the project.
+
+## 🚀 Getting started
 
 ### Setup
 
 ```bash
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Suggested workflow
+### Running the app
 
-1. Read the scenario carefully and identify requirements and edge cases.
-2. Draft a UML diagram (classes, attributes, methods, relationships).
-3. Convert UML into Python class stubs (no logic yet).
-4. Implement scheduling logic in small increments.
-5. Add tests to verify key behaviors.
-6. Connect your logic to the Streamlit UI in `app.py`.
-7. Refine UML so it matches what you actually built.
+Launch the Streamlit UI:
 
-## 🖥️ Sample Output
-
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
-
-
-## 🖥️ Sample Output
-
-
+```bash
+streamlit run app.py
 ```
+
+Or run the CLI demo:
+
+```bash
+python3 main.py
+```
+
+## 📸 Demo Walkthrough
+
+1. Enter an owner name and a pet name, then add one or more pets.
+2. Select a pet and add care tasks with a time and frequency.
+3. Click **Generate schedule** to build the daily plan.
+4. The schedule is automatically sorted by time and displayed in a table.
+5. If two tasks occur at the same time, the app displays a conflict warning.
+6. The CLI demo (`python3 main.py`) also shows filtering, conflict detection, and recurring task completion (completing a task automatically creates its next occurrence).
+
+Sample output from `python3 main.py`:
+
+```text
 ========================================
          Daily Schedule - Today         
 ========================================
 
 Daily plan for Biscuit (Dog):
-  #  Time  Task              Frequency  Priority  Completed
-  ---------------------------------------------------------
-  1  07:00 Morning walk      daily      High      No
-  2  08:00 Feed breakfast    daily      High      No
+  #  Time  Task                     Frequency  Priority  Completed
+  ----------------------------------------------------------------
+  1  07:00 Morning walk             daily      High      No
+  2  08:00 Feed breakfast           daily      High      No
 
 Daily plan for Whiskers (Cat):
-  #  Time  Task              Frequency  Priority  Completed
-  ---------------------------------------------------------
-  1  18:00 Clean litter box  weekly     Normal    No
+  #  Time  Task                     Frequency  Priority  Completed
+  ----------------------------------------------------------------
+  1  07:00 Feed Whiskers breakfast  daily      High      No
+  2  18:00 Clean litter box         weekly     Normal    No
 
 ----------------------------------------
-3 task(s) still pending, 0 already completed, ordered by time.
+4 task(s) still pending, 0 already completed, ordered by time. Conflict at 07:00: Morning walk (Biscuit), Feed Whiskers breakfast (Whiskers).
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+WARNING: SCHEDULING CONFLICT(S) DETECTED
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  - Conflict at 07:00: Morning walk (Biscuit), Feed Whiskers breakfast (Whiskers).
 
 Summary
 -------
-Total tasks: 3
-Pending: 3
+Total tasks: 4
+Pending: 4
 Completed: 0
+
+Pending Tasks
+-------------
+  07:00 Morning walk (Biscuit) - daily, Due: 2026-07-05, Completed: No
+  08:00 Feed breakfast (Biscuit) - daily, Due: 2026-07-05, Completed: No
+  18:00 Clean litter box (Whiskers) - weekly, Due: 2026-07-05, Completed: No
+  07:00 Feed Whiskers breakfast (Whiskers) - daily, Due: 2026-07-05, Completed: No
+
+Biscuit's Tasks
+---------------
+  07:00 Morning walk (Biscuit) - daily, Due: 2026-07-05, Completed: No
+  08:00 Feed breakfast (Biscuit) - daily, Due: 2026-07-05, Completed: No
+
+Recurring Task Demo
+===================
+
+Biscuit's Tasks (before completing 'Morning walk')
+--------------------------------------------------
+  07:00 Morning walk (Biscuit) - daily, Due: 2026-07-05, Completed: No
+  08:00 Feed breakfast (Biscuit) - daily, Due: 2026-07-05, Completed: No
+
+Biscuit's Tasks (after completing 'Morning walk')
+-------------------------------------------------
+  07:00 Morning walk (Biscuit) - daily, Due: 2026-07-05, Completed: Yes
+  08:00 Feed breakfast (Biscuit) - daily, Due: 2026-07-05, Completed: No
+  07:00 Morning walk (Biscuit) - daily, Due: 2026-07-06, Completed: No
 ```
 
+**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
 
 ## 🧪 Testing PawPal+
 
@@ -96,41 +152,19 @@ The automated tests verify:
 Sample test output:
 
 ```text
-============================================= test session starts =============================================
-platform darwin -- Python 3.11.4, pytest-7.4.0, pluggy-1.0.0
+============================= test session starts ==============================
+platform darwin -- Python 3.13.7, pytest-9.1.1, pluggy-1.6.0
 rootdir: /Users/jannati/Desktop/ai110-module2show-pawpal-starter
-plugins: anyio-4.13.0
+plugins: anyio-4.14.1
 collected 5 items
 
-tests/test_pawpal.py .....                                                                              [100%]
+tests/test_pawpal.py .....                                               [100%]
 
-============================================== 5 passed in 0.01s ==============================================
+============================== 5 passed in 0.01s ===============================
 ```
 
-### Confidence Level
+## ⭐ Confidence Level
 
-⭐⭐⭐⭐☆ (4/5)
+**Rating: 4/5 stars**
 
-The test suite covers the core scheduling behaviors, including sorting, recurring tasks, and conflict detection. However, there are still additional edge cases that could be tested, such as overlapping task durations and more complex scheduling scenarios.
-
-## 📐 Smarter Scheduling
-
-| Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Sorting by time | `Scheduler.generate_plan()`, `_safe_parse_time()` | Tasks are sorted by time in chronological order. Invalid times are handled safely. |
-| Filtering by pet or completion status | `Owner.get_all_tasks(pet_name, completed)`, `Pet.get_tasks(completed)`, `Scheduler.generate_plan(pet_name, completed)` | The scheduler can show tasks for one pet, only pending tasks, or only completed tasks. |
-| Recurring task logic | `Task.mark_complete()`, `Task.is_due(reference_date)`, `Pet.complete_task()` | Completing a daily or weekly task creates a new task for the next due date. |
-| Conflict detection | `Scheduler.find_conflicts()` | The scheduler warns when two pending tasks share the same due date and start time. |
-
-
-## 📸 Demo Walkthrough
-
-Describe your app in numbered steps so a reader can follow along without watching a video:
-
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
-
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+The system passes all 5 automated tests, covering task completion, adding tasks, chronological sorting, daily-recurrence generation, and conflict detection between pets — the behaviors most central to the app's value. Filtering (`Pet.get_tasks`, `Owner.get_all_tasks`), weekly recurrence, monthly tasks, and invalid/unparseable time handling are implemented and demonstrated via the CLI demo, but don't yet have dedicated pytest coverage, which is the main gap keeping this from a higher confidence rating.
